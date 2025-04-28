@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>  قانون كولوم</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        .particle {
+            transition: transform 0.5s ease-out;
+        }
+        .force-line {
+            stroke-dasharray: 5, 5;
+            animation: dash 1s linear infinite;
+        }
+        @keyframes dash {
+            from {
+                stroke-dashoffset: 10;
+            }
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        .positive {
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+        }
+        .negative {
+            box-shadow: 0 0 15px rgba(0, 0, 255, 0.7);
+        }
+        .input-english {
+            direction: ltr;
+            text-align: left;
+        }
+        .calculation-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+        }
+        .result-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .input-highlight {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .glow {
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+            }
+            to {
+                box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+            }
+        }
+        .attractive {
+            color: #10B981;
+        }
+        .repulsive {
+            color: #EF4444;
+        }
+        .input-error {
+            border-color: #EF4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+        .unit-selector {
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+        .info-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .info-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center text-blue-800 mb-6">  قانون كولوم</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Controls Panel -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4"> قيم المتغيرات </h2>
+                
+                <div class="space-y-6">
+                    <!-- Charge 1 Controls -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-medium text-gray-700 mb-3">الشحنة 1 (Q₁)</h3>
+                        
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-600 mb-1">نوع الشحنة</label>
+                            <div class="flex space-x-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="charge1Type", value="positive" checked 
+                                           class="h-4 w-4 text-red-600 focus:ring-red-500">
+                                    <span class="ml-2 text-gray-700">موجب (+)</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="charge1Type", value="negative" 
+                                           class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-gray-700">سالب (-)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="charge1ValueInput" class="block text-sm font-medium text-gray-600 mb-1">
+                                قيمة الشحنة
+                            </label>
+                            <div class="flex">
+                                <input type="number" id="charge1ValueInput" value="1" step="any"
+                                       class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-r-none input-english input-highlight"
+                                       placeholder="أدخل قيمة الشحنة">
+                                <select id="charge1Unit" class="mt-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 unit-selector">
+                                    <option value="C">كولوم (C)</option>
+                                    <option value="mC">ملي كولوم (mC)</option>
+                                    <option value="μC" selected>ميكرو كولوم (μC)</option>
+                                    <option value="nC">نانو كولوم (nC)</option>
+                                </select>
+                            </div>
+                            <p id="charge1Error" class="text-red-500 text-xs mt-1 hidden">القيمة يجب أن تكون عدداً صحيحاً أو عشرياً</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Charge 2 Controls -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-medium text-gray-700 mb-3">الشحنة 2 (Q₂)</h3>
+                        
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-600 mb-1">نوع الشحنة</label>
+                            <div class="flex space-x-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="charge2Type", value="positive" 
+                                           class="h-4 w-4 text-red-600 focus:ring-red-500">
+                                    <span class="ml-2 text-gray-700">موجب (+)</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="charge2Type", value="negative" checked 
+                                           class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-gray-700">سالب (-)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="charge2ValueInput" class="block text-sm font-medium text-gray-600 mb-1">
+                                قيمة الشحنة
+                            </label>
+                            <div class="flex">
+                                <input type="number" id="charge2ValueInput" value="1" step="any"
+                                       class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-r-none input-english input-highlight"
+                                       placeholder="أدخل قيمة الشحنة">
+                                <select id="charge2Unit" class="mt-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 unit-selector">
+                                    <option value="C">كولوم (C)</option>
+                                    <option value="mC">ملي كولوم (mC)</option>
+                                    <option value="μC" selected>ميكرو كولوم (μC)</option>
+                                    <option value="nC">نانو كولوم (nC)</option>
+                                </select>
+                            </div>
+                            <p id="charge2Error" class="text-red-500 text-xs mt-1 hidden">القيمة يجب أن تكون عدداً صحيحاً أو عشرياً</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Distance Controls -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-medium text-gray-700 mb-3">المسافة (r)</h3>
+                        
+                        <div>
+                            <label for="distanceValueInput" class="block text-sm font-medium text-gray-600 mb-1">
+                                المسافة
+                            </label>
+                            <div class="flex">
+                                <input type="number" id="distanceValueInput" value="1" step="any"
+                                       class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-r-none input-english input-highlight"
+                                       placeholder="أدخل قيمة المسافة">
+                                <select id="distanceUnit" class="mt-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 unit-selector">
+                                    <option value="m">متر (m)</option>
+                                    <option value="cm" selected>سنتيمتر (cm)</option>
+                                    <option value="mm">مليمتر (mm)</option>
+                                    <option value="km">كيلومتر (km)</option>
+                                </select>
+                            </div>
+                            <p id="distanceError" class="text-red-500 text-xs mt-1 hidden">القيمة يجب أن تكون عدداً موجباً</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Simulation Controls -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-medium text-gray-700 mb-3">تحكم فى المحاكاة </h3>
+                        
+                        <button id="calculateForce" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                            <i class="fas fa-calculator mr-2"></i> حساب القوة
+                        </button>
+                        
+                        <button id="startSimulation" 
+                                class="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 glow">
+                            <i class="fas fa-play mr-2"></i> بدء  
+                        </button>
+                        
+                        <button id="resetSimulation" 
+                                class="w-full mt-3 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                            <i class="fas fa-redo mr-2"></i> إعادة تعيين
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Simulation Canvas -->
+            <div class="lg:col-span-2">
+                <div class="bg-white p-6 rounded-lg shadow-lg h-full">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">تفاعل الشحنات</h2>
+                    
+                    <div class="relative bg-gray-100 rounded-lg overflow-hidden" style="height: 500px;">
+                        <svg id="simulationCanvas" width="100%" height="100%" class="bg-gray-50">
+                            <!-- Force lines will be drawn here -->
+                            <line id="forceLine1" class="force-line" stroke="red" stroke-width="2" />
+                            <line id="forceLine2", class="force-line" stroke="blue" stroke-width="2" />
+                            
+                            <!-- Particles will be positioned here -->
+                            <circle id="particle1" cx="150" cy="250" r="20" class="particle fill-red-500 positive" />
+                            <circle id="particle2" cx="450" cy="250" r="20" class="particle fill-blue-500 negative" />
+                            
+                            <!-- Labels (only showing charge type now) -->
+                            <text id="particle1Label" x="150" y="220" text-anchor="middle" class="text-lg font-bold">+</text>
+                            <text id="particle2Label" x="450" y="220" text-anchor="middle" class="text-lg font-bold">-</text>
+                            
+                            <!-- Distance indicator -->
+                            <line id="distanceLine" x1="170" y1="280" x2="430" y2="280" stroke="black" stroke-width="1" stroke-dasharray="3,3" />
+                            
+                            <!-- Distance label -->
+                            <text x="300" y="300" text-anchor="middle" class="text-sm font-medium">المسافة</text>
+                        </svg>
+                        
+                        <div id="forceInfo" class="absolute bottom-4 left-4 bg-white bg-opacity-90 p-3 rounded-lg shadow">
+                            <div class="flex items-center mb-1">
+                                <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                                <span class="text-sm font-medium">القوة على Q₁: <span id="force1Value">0.00</span> نيوتن</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+                                <span class="text-sm font-medium">القوة على Q₂: <span id="force2Value">0.00</span> نيوتن</span>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-600">
+                                ثابت كولوم (k) = 9×10⁹ N·m²/C²
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Results Display -->
+                    <div class="mt-6 result-card p-6 rounded-lg">
+                        <h3 class="text-xl font-bold text-white mb-4">نتائج  </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div class="bg-white bg-opacity-20 p-3 rounded-md backdrop-blur-sm">
+                                <p class="text-sm text-white font-medium">نوع التفاعل</p>
+                                <p class="text-lg font-bold" id="interactionType">تجاذب</p>
+                            </div>
+                            <div class="bg-white bg-opacity-20 p-3 rounded-md backdrop-blur-sm">
+                                <p class="text-sm text-white font-medium"> القوة</p>
+                                <p class="text-lg font-bold" id="forceMagnitude">0.00 N</p>
+                            </div>
+                            <div class="bg-white bg-opacity-20 p-3 rounded-md backdrop-blur-sm">
+                                <p class="text-sm text-white font-medium">المسافة </p>
+                                <p class="text-lg font-bold" id="effectiveDistance">1.00 م</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white bg-opacity-20 p-4 rounded-md backdrop-blur-sm">
+                            <p class="text-sm text-white font-medium mb-2">حساب القوة</p>
+                            <p class="text-sm font-mono bg-black bg-opacity-30 p-2 rounded" id="forceCalculation">
+                                F = k · |Q₁·Q₂| / r² = 9×10⁹ · |1×(-1)| / (1)² = 0.00 N
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 bg-blue-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-medium text-blue-800 mb-2 flex items-center">
+                            قانون كولوم
+                            <span class="info-tooltip ml-2">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                                <span class="tooltip-text text-xs">
+                                    الشحنات المتشابهة تتنافر والمختلفة تتجاذب<br>
+                                    F = k · |Q₁·Q₂| / r²<br>
+                                    k = 9×10⁹ N·m²/C²
+                                </span>
+                            </span>
+                        </h3>
+                        <p class="text-gray-700 mb-2">
+                            القوة بين شحنتين تعطى بالعلاقة:
+                        </p>
+                        <div class="bg-white p-3 rounded-md text-center">
+                            <p class="text-lg font-mono">
+                                F = k · |Q₁·Q₂| / r²
+                            </p>
+                        </div>
+                        <p class="text-gray-700 mt-2 text-sm">
+                            حيث:<br>
+                            k = 9×10⁹ نيوتن·م²/كولوم² (ثابت كولوم)<br>
+                            Q₁, Q₂ = الشحنتان (كولوم)<br>
+                            r = المسافة بين الشحنتين (متر)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const k = 9e9; // Updated Coulomb's constant to 9×10⁹ N·m²/C²
+        const scaleFactor = 0.1; // To scale down the force for visualization
+        const maxForce = 10; // Maximum force for scaling purposes
+        
+        // Unit conversion factors
+        const chargeUnitFactors = {
+            'C': 1,
+            'mC': 1e-3,
+            'μC': 1e-6,
+            'nC': 1e-9
+        };
+        
+        const distanceUnitFactors = {
+            'm': 1,
+            'cm': 1e-2,
+            'mm': 1e-3,
+            'km': 1e3
+        };
+        
+        // DOM Elements
+        const particle1 = document.getElementById('particle1');
+        const particle2 = document.getElementById('particle2');
+        const particle1Label = document.getElementById('particle1Label');
+        const particle2Label = document.getElementById('particle2Label');
+        const forceLine1 = document.getElementById('forceLine1');
+        const forceLine2 = document.getElementById('forceLine2');
+        const distanceLine = document.getElementById('distanceLine');
+        const force1Value = document.getElementById('force1Value');
+        const force2Value = document.getElementById('force2Value');
+        const charge1ValueInput = document.getElementById('charge1ValueInput');
+        const charge2ValueInput = document.getElementById('charge2ValueInput');
+        const distanceValueInput = document.getElementById('distanceValueInput');
+        const charge1Unit = document.getElementById('charge1Unit');
+        const charge2Unit = document.getElementById('charge2Unit');
+        const distanceUnit = document.getElementById('distanceUnit');
+        const charge1Error = document.getElementById('charge1Error');
+        const charge2Error = document.getElementById('charge2Error');
+        const distanceError = document.getElementById('distanceError');
+        const startSimulationBtn = document.getElementById('startSimulation');
+        const resetSimulationBtn = document.getElementById('resetSimulation');
+        const calculateForceBtn = document.getElementById('calculateForce');
+        const forceCalculation = document.getElementById('forceCalculation');
+        const interactionType = document.getElementById('interactionType');
+        const forceMagnitude = document.getElementById('forceMagnitude');
+        const effectiveDistance = document.getElementById('effectiveDistance');
+        
+        // State variables
+        let charge1Type = 'positive';
+        let charge2Type = 'negative';
+        let charge1Value = 1; // in default unit (μC)
+        let charge2Value = 1; // in default unit (μC)
+        let distance = 1; // in default unit (cm)
+        let simulationRunning = false;
+        let animationId = null;
+        let currentDistance = 1; // Track actual distance during simulation in meters
+        
+        // Initialize the simulation
+        function initSimulation() {
+            updateControls();
+            updateVisuals();
+            updateCalculationDisplay();
+        }
+        
+        // Update control values
+        function updateControls() {
+            // Charge type radios
+            document.querySelector('input[name="charge1Type"][value="' + charge1Type + '"]').checked = true;
+            document.querySelector('input[name="charge2Type"][value="' + charge2Type + '"]').checked = true;
+            
+            // Text inputs
+            charge1ValueInput.value = charge1Value;
+            charge2ValueInput.value = charge2Value;
+            distanceValueInput.value = distance;
+        }
+        
+        // Convert charge value to Coulombs
+        function getChargeInCoulombs(value, unit) {
+            return value * chargeUnitFactors[unit];
+        }
+        
+        // Convert distance value to meters
+        function getDistanceInMeters(value, unit) {
+            return value * distanceUnitFactors[unit];
+        }
+        
+        // Format a number with unit prefix
+        function formatWithUnit(value, unit) {
+            if (Math.abs(value) >= 1e6) return value.toExponential(2) + ' ' + unit;
+            if (Math.abs(value) < 0.01) return value.toExponential(2) + ' ' + unit;
+            return value.toFixed(2) + ' ' + unit;
+        }
+        
+        // Validate input values
+        function validateInputs() {
+            let isValid = true;
+            
+            // Validate charge 1
+            const q1 = parseFloat(charge1ValueInput.value);
+            if (isNaN(q1)) {
+                charge1Error.classList.remove('hidden');
+                charge1ValueInput.classList.add('input-error');
+                isValid = false;
+            } else {
+                charge1Error.classList.add('hidden');
+                charge1ValueInput.classList.remove('input-error');
+                charge1Value = q1;
+            }
+            
+            // Validate charge 2
+            const q2 = parseFloat(charge2ValueInput.value);
+            if (isNaN(q2)) {
+                charge2Error.classList.remove('hidden');
+                charge2ValueInput.classList.add('input-error');
+                isValid = false;
+            } else {
+                charge2Error.classList.add('hidden');
+                charge2ValueInput.classList.remove('input-error');
+                charge2Value = q2;
+            }
+            
+            // Validate distance
+            const dist = parseFloat(distanceValueInput.value);
+            if (isNaN(dist) || dist <= 0) {
+                distanceError.classList.remove('hidden');
+                distanceValueInput.classList.add('input-error');
+                isValid = false;
+            } else {
+                distanceError.classList.add('hidden');
+                distanceValueInput.classList.remove('input-error');
+                distance = dist;
+                currentDistance = getDistanceInMeters(dist, distanceUnit.value);
+            }
+            
+            return isValid;
+        }
+        
+        // Update visual elements
+        function updateVisuals() {
+            // Update particle colors and labels based on charge type
+            if (charge1Type === 'positive') {
+                particle1.classList.remove('negative', 'fill-blue-500');
+                particle1.classList.add('positive', 'fill-red-500');
+                particle1Label.textContent = '+';
+            } else {
+                particle1.classList.remove('positive', 'fill-red-500');
+                particle1.classList.add('negative', 'fill-blue-500');
+                particle1Label.textContent = '-';
+            }
+            
+            if (charge2Type === 'positive') {
+                particle2.classList.remove('negative', 'fill-blue-500');
+                particle2.classList.add('positive', 'fill-red-500');
+                particle2Label.textContent = '+';
+            } else {
+                particle2.classList.remove('positive', 'fill-red-500');
+                particle2.classList.add('negative', 'fill-blue-500');
+                particle2Label.textContent = '-';
+            }
+            
+            // Calculate positions based on distance
+            const canvasWidth = document.getElementById('simulationCanvas').clientWidth;
+            const centerX = canvasWidth / 2;
+            const particleRadius = 20;
+            
+            // Scale the distance to fit the canvas (using logarithmic scale for better visualization)
+            const minDistance = 0.05; // 5 cm in meters
+            const maxDistance = 10; // 1000 cm in meters
+            const scaledDistance = Math.log(currentDistance / minDistance + 1) / Math.log(maxDistance / minDistance + 1) * (canvasWidth - 200) + 100;
+            
+            const particle1X = centerX - scaledDistance / 2;
+            const particle2X = centerX + scaledDistance / 2;
+            const particleY = 250;
+            
+            // Update particle positions
+            particle1.setAttribute('cx', particle1X);
+            particle1.setAttribute('cy', particleY);
+            particle1Label.setAttribute('x', particle1X);
+            particle1Label.setAttribute('y', particleY - 30);
+            
+            particle2.setAttribute('cx', particle2X);
+            particle2.setAttribute('cy', particleY);
+            particle2Label.setAttribute('x', particle2X);
+            particle2Label.setAttribute('y', particleY - 30);
+            
+            // Update distance line
+            distanceLine.setAttribute('x1', particle1X + particleRadius);
+            distanceLine.setAttribute('x2', particle2X - particleRadius);
+            distanceLine.setAttribute('y1', particleY + particleRadius + 10);
+            distanceLine.setAttribute('y2', particleY + particleRadius + 10);
+            
+            // Display distance in meters with 2 decimal places
+            effectiveDistance.textContent = currentDistance.toFixed(2) + ' م';
+            
+            // Calculate and display forces
+            calculateForces();
+        }
+        
+        // Update calculation display
+        function updateCalculationDisplay() {
+            // Get values in base units (Coulombs and meters)
+            const q1 = getChargeInCoulombs(charge1Value, charge1Unit.value);
+            const q2 = getChargeInCoulombs(charge2Value, charge2Unit.value);
+            const r = currentDistance; // Already in meters
+            
+            // Calculate force for display
+            const forceMagnitudeValue = k * Math.abs(q1 * q2) / (r * r);
+            
+            // Determine interaction type (المتشابهة تتنافر والمختلفة تتجاذب)
+            const attractive = (charge1Type !== charge2Type);
+            interactionType.textContent = attractive ? "تجاذب" : "تنافر";
+            interactionType.className = attractive ? "text-lg font-bold attractive" : "text-lg font-bold repulsive";
+            
+            forceMagnitude.textContent = forceMagnitudeValue.toExponential(2) + " N";
+            
+            // Format numbers for display
+            const formatNumber = (num) => {
+                if (Math.abs(num) >= 1e6 || Math.abs(num) < 0.01) return num.toExponential(2);
+                return num.toFixed(2);
+            };
+            
+            // Get the selected units for display
+            const q1Unit = charge1Unit.options[charge1Unit.selectedIndex].text;
+            const q2Unit = charge2Unit.options[charge2Unit.selectedIndex].text;
+            const rUnit = distanceUnit.options[distanceUnit.selectedIndex].text;
+            
+            forceCalculation.textContent = 
+                `F = k · |Q₁·Q₂| / r² = 9×10⁹ · |${formatNumber(q1)}×${formatNumber(q2)}| / (${formatNumber(r)})² = ${formatNumber(forceMagnitudeValue)} N`;
+        }
+        
+        // Calculate forces between charges
+        function calculateForces() {
+            // Get values in base units (Coulombs and meters)
+            const q1 = getChargeInCoulombs(charge1Value, charge1Unit.value);
+            const q2 = getChargeInCoulombs(charge2Value, charge2Unit.value);
+            const r = currentDistance; // Already in meters
+            
+            // Calculate force magnitude (absolute value)
+            const forceMagnitudeValue = k * Math.abs(q1 * q2) / (r * r);
+            
+            // Determine direction based on charge types (المتشابهة تتنافر والمختلفة تتجاذب)
+            const attractive = (charge1Type !== charge2Type);
+            
+            // Update force display
+            force1Value.textContent = forceMagnitudeValue.toExponential(2);
+            force2Value.textContent = forceMagnitudeValue.toExponential(2);
+            
+            // Update calculation display
+            updateCalculationDisplay();
+            
+            // Update force lines
+            const particle1X = parseFloat(particle1.getAttribute('cx'));
+            const particle1Y = parseFloat(particle1.getAttribute('cy'));
+            const particle2X = parseFloat(particle2.getAttribute('cx'));
+            const particle2Y = parseFloat(particle2.getAttribute('cy'));
+            
+            // Scale force for visualization
+            const visualForce = Math.min(forceMagnitudeValue * scaleFactor, 100);
+            
+            if (attractive) {
+                // Forces point toward each other (attraction)
+                forceLine1.setAttribute('x1', particle1X);
+                forceLine1.setAttribute('y1', particle1Y);
+                forceLine1.setAttribute('x2', particle1X + (particle2X - particle1X) * visualForce / 200);
+                forceLine1.setAttribute('y2', particle1Y + (particle2Y - particle1Y) * visualForce / 200);
+                
+                forceLine2.setAttribute('x1', particle2X);
+                forceLine2.setAttribute('y1', particle2Y);
+                forceLine2.setAttribute('x2', particle2X + (particle1X - particle2X) * visualForce / 200);
+                forceLine2.setAttribute('y2', particle2Y + (particle1Y - particle2Y) * visualForce / 200);
+            } else {
+                // Forces point away from each other (repulsion)
+                forceLine1.setAttribute('x1', particle1X);
+                forceLine1.setAttribute('y1', particle1Y);
+                forceLine1.setAttribute('x2', particle1X - (particle2X - particle1X) * visualForce / 200);
+                forceLine1.setAttribute('y2', particle1Y - (particle2Y - particle1Y) * visualForce / 200);
+                
+                forceLine2.setAttribute('x1', particle2X);
+                forceLine2.setAttribute('y1', particle2Y);
+                forceLine2.setAttribute('x2', particle2X - (particle1X - particle2X) * visualForce / 200);
+                forceLine2.setAttribute('y2', particle2Y - (particle1Y - particle2Y) * visualForce / 200);
+            }
+            
+            return { forceMagnitude: forceMagnitudeValue, attractive };
+        }
+                // Run the simulation
+        function runSimulation() {
+            if (!validateInputs()) return;
+            
+            if (simulationRunning) {
+                pauseSimulation();
+                return;
+            }
+            
+            simulationRunning = true;
+            startSimulationBtn.disabled = true;
+            startSimulationBtn.innerHTML = '<i class="fas fa-pause mr-2"></i> إيقاف  ';
+            
+            const { forceMagnitude, attractive } = calculateForces();
+            const particle1X = parseFloat(particle1.getAttribute('cx'));
+            const particle2X = parseFloat(particle2.getAttribute('cx'));
+            
+            // Calculate movement speed (slow for visualization)
+            const speed = Math.min(forceMagnitude * 0.01, 2);
+            
+            let lastTimestamp = null;
+            
+            function animate(timestamp) {
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const deltaTime = timestamp - lastTimestamp;
+                lastTimestamp = timestamp;
+                
+                // Get current positions
+                let p1X = parseFloat(particle1.getAttribute('cx'));
+                let p2X = parseFloat(particle2.getAttribute('cx'));
+                
+                // Update positions based on attraction/repulsion
+                if (attractive) {
+                    // Move toward each other (attraction)
+                    p1X += speed * deltaTime / 30;
+                    p2X -= speed * deltaTime / 30;
+                } else {
+                    // Move away from each other (repulsion)
+                    p1X -= speed * deltaTime / 30;
+                    p2X += speed * deltaTime / 30;
+                }
+                
+                // Prevent particles from passing each other or going off screen
+                const minDistance = 40;
+                const maxDistance = document.getElementById('simulationCanvas').clientWidth - 40;
+                const visualDistance = Math.abs(p2X - p1X);
+                
+                if (attractive && visualDistance < minDistance) {
+                    // For attraction, prevent particles from getting too close
+                    p1X = particle1X;
+                    p2X = particle2X;
+                } else if (!attractive && visualDistance > maxDistance) {
+                    // For repulsion, prevent particles from getting too far
+                    p1X = particle1X;
+                    p2X = particle2X;
+                }
+                
+                // Update particle positions
+                particle1.setAttribute('cx', p1X);
+                particle1Label.setAttribute('x', p1X);
+                particle2.setAttribute('cx', p2X);
+                particle2Label.setAttribute('x', p2X);
+                
+                // Update distance line
+                distanceLine.setAttribute('x1', p1X + 20);
+                distanceLine.setAttribute('x2', p2X - 20);
+                
+                // Calculate actual distance in meters for display
+                const minDisplayDistance = 0.05; // 5 cm in meters
+                const maxDisplayDistance = 10; // 1000 cm in meters
+                
+                // Reverse the logarithmic scaling to get the actual distance
+                const scaledRatio = (visualDistance - 100) / (maxDistance - 200);
+                const logRatio = scaledRatio * Math.log(maxDisplayDistance / minDisplayDistance + 1);
+                const newDistance = minDisplayDistance * (Math.exp(logRatio) - 1);
+                
+                currentDistance = Math.max(minDisplayDistance, Math.min(maxDisplayDistance, newDistance));
+                
+                effectiveDistance.textContent = currentDistance.toFixed(2) + ' م';
+                
+                // Recalculate forces with new distance
+                calculateForces();
+                
+                if (simulationRunning) {
+                    animationId = requestAnimationFrame(animate);
+                }
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // Pause the simulation
+        function pauseSimulation() {
+            simulationRunning = false;
+            startSimulationBtn.disabled = false;
+            startSimulationBtn.innerHTML = '<i class="fas fa-play mr-2"></i> بدء  ';
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+        
+        // Reset the simulation
+        function resetSimulation() {
+            pauseSimulation();
+            
+            // Reset to initial values
+            charge1Value = 1;
+            charge2Value = 1;
+            distance = 1;
+            currentDistance = getDistanceInMeters(1, distanceUnit.value);
+            
+            // Reset unit selectors to defaults
+            charge1Unit.value = 'μC';
+            charge2Unit.value = 'μC';
+            distanceUnit.value = 'cm';
+            
+            updateControls();
+            updateVisuals();
+        }
+        
+        // Calculate force without simulation
+        function calculateForce() {
+            if (!validateInputs()) return;
+            
+            // Update current distance based on input
+            currentDistance = getDistanceInMeters(distanceValueInput.value, distanceUnit.value);
+            
+            updateVisuals();
+            calculateForces();
+        }
+        
+        // Event Listeners
+        document.querySelectorAll('input[name="charge1Type"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                charge1Type = radio.value;
+                updateVisuals();
+            });
+        });
+        
+        document.querySelectorAll('input[name="charge2Type"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                charge2Type = radio.value;
+                updateVisuals();
+            });
+        });
+        
+        // Text inputs
+        charge1ValueInput.addEventListener('input', () => {
+            const value = parseFloat(charge1ValueInput.value);
+            if (!isNaN(value)) {
+                charge1Error.classList.add('hidden');
+                charge1ValueInput.classList.remove('input-error');
+            }
+        });
+        
+        charge2ValueInput.addEventListener('input', () => {
+            const value = parseFloat(charge2ValueInput.value);
+            if (!isNaN(value)) {
+                charge2Error.classList.add('hidden');
+                charge2ValueInput.classList.remove('input-error');
+            }
+        });
+        
+        distanceValueInput.addEventListener('input', () => {
+            const value = parseFloat(distanceValueInput.value);
+            if (!isNaN(value) && value > 0) {
+                distanceError.classList.add('hidden');
+                distanceValueInput.classList.remove('input-error');
+            }
+        });
+        
+        // Highlight inputs when focused
+        [charge1ValueInput, charge2ValueInput, distanceValueInput].forEach(input => {
+            input.addEventListener('focus', () => {
+                input.classList.add('input-highlight');
+            });
+            
+            input.addEventListener('blur', () => {
+                input.classList.remove('input-highlight');
+            });
+        });
+        
+        // Unit selectors change
+        [charge1Unit, charge2Unit, distanceUnit].forEach(select => {
+            select.addEventListener('change', () => {
+                calculateForce();
+            });
+        });
+        
+        // Calculate button
+        calculateForceBtn.addEventListener('click', calculateForce);
+        
+        // Simulation buttons
+        startSimulationBtn.addEventListener('click', runSimulation);
+        
+        resetSimulationBtn.addEventListener('click', resetSimulation);
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            updateVisuals();
+        });
+        
+        // Handle Enter key in inputs
+        [charge1ValueInput, charge2ValueInput, distanceValueInput].forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    calculateForce();
+                }
+            });
+        });
+        
+        // Initialize
+        initSimulation();
+    </script>
+
+                                                </html>
